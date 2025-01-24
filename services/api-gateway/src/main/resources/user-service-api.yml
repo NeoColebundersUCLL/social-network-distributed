@@ -1,0 +1,209 @@
+openapi: 3.0.1
+info:
+  title: User Service API
+  version: 1.0.0
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      tags:
+        - User
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiUser'
+      responses:
+        '201':
+          description: User created
+
+    get:
+      summary: Retrieve all users
+      tags:
+        - User
+      operationId: getUsers
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiUser'
+  /users/{id}:
+    get:
+      summary: Get a user by ID
+      tags:
+        - User
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUser'
+  /users/addFriend:
+    post:
+      summary: Add a user as a friend
+      tags:
+        - User
+      operationId: addFriend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FriendRequest'
+      responses:
+        '200':
+          description: Friend added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiUser'
+components:
+  schemas:
+    ApiUsers:
+      type: array
+      items:
+        $ref: '#/components/schemas/ApiUser'
+    ApiUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john.doe@example.com"
+        friends:
+          type: array
+          description: A list of the user's friends.
+          items:
+            type: integer
+    UserCreatedEvent:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/ApiUser'
+    FriendRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+        friendId:
+          type: integer
+    ValidateTaggedUsersCommand:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The ID of the post being tagged.
+        tags:
+          type: array
+          items:
+            type: integer
+            description: A list of user IDs to tag.
+    TaggedUsersValidatedEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The ID of the post for which users were tagged.
+          example: 123
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiUser'
+        taggedUsersValid:
+          type: boolean
+          description: Indicates whether the tagged users were successfully validated.
+          example: true
+    ValidateOwnerCommand:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The ID of the post.
+        userId:
+          type: integer
+          description: The ID of the post owner.
+        name:
+          type: string
+          description: The name of the owner.
+    OwnerValidatedEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+          description: The ID of the post.
+        userId:
+          type: integer
+          description: The ID of the post owner.
+        name:
+          type: string
+          description: The name of the owner.
+        email:
+          type: string
+          description: The email of the owner.
+        isOwner:
+          type: boolean
+    ValidatePostLikeUserCommand:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+    PostLikeUserValidatedEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+        email:
+          type : string
+        isValid:
+          type: boolean
+
+    ValidatePostCommentUserCommand:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+    PostCommentUserValidatedEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+        email:
+          type: string
+        isValid:
+          type: boolean
+        content:
+          type: string
+
+
+
+
+

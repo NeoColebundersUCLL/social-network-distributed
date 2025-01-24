@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: Social Network API Gateway
+  description: Gateway for managing API requests to various microservices for the social networking platform.
+  version: 1.0.0
+paths:
+  /social-network/feed/{userId}:
+    get:
+      summary: Get user feed
+      description: Retrieves a list of posts for a specific user via the Feed Service.
+      tags:
+        - SocialNetwork
+      operationId: getUserFeed
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the user whose feed is being retrieved.
+      responses:
+        '200':
+          description: List of posts for the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialNetworkPost'
+        '404':
+          description: User not found or no posts for the user
+        '500':
+          description: Internal Server Error
+  /social-network/feed/{userId}/search:
+    get:
+      summary: Search user feed
+      description: Retrieves a list of posts for the given user that match the search query.
+      tags:
+        - SocialNetwork
+      operationId: searchUserFeed
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user whose feed is being searched.
+          required: true
+          schema:
+            type: integer
+        - name: query
+          in: query
+          description: The search query string to filter posts.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of posts matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialNetworkPost'
+        '404':
+          description: User not found or no posts matching the query
+        '500':
+          description: Internal Server Error
+  /social-network/users:
+    post:
+      summary: Create a new user
+      tags:
+        - SocialNetwork
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkUser'
+      responses:
+        '201':
+          description: User created
+  /social-network/users/addFriend:
+    post:
+      summary: Add a user as a friend
+      tags:
+        - SocialNetwork
+      operationId: addFriend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkFriendRequest'
+      responses:
+        '200':
+          description: Friend added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SocialNetworkUser'
+  /social-network/posts:
+    post:
+      summary: Create a new post with tags using saga
+      description: Creates a new post, tags users, and validates both the owner and tagged users using the Saga pattern.
+      tags:
+        - SocialNetwork
+      operationId: createPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkPost'
+            example:
+              ownerId: 1
+              body: "This is a new post"
+              tags:
+                - 1
+                - 2
+                - 3
+      responses:
+        '204':
+          description: Post created and users tagged successfully
+  /social-network/posts/{postId}/user/{userId}:
+    delete:
+      summary: deletes a post of a user.
+      description: remove
+      tags:
+        - SocialNetwork
+      operationId: removePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: Id of post.
+          schema:
+            type: integer
+            format: int32
+        - name: userId
+          in: path
+          required: true
+          description: Id of user.
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: post deleted succesful.
+  /social-network/posts/like:
+    post:
+      summary: Likes a post for a user.
+      description: Allows a user to like a specific post by providing the user ID and post ID in the request body.
+      tags:
+        - SocialNetwork
+      operationId: likePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkLikePostRequest'
+      responses:
+        '200':
+          description: Post liked successfully.
+  /social-network/posts/unlike:
+    post:
+      summary: Removes a like from a post for a user.
+      description: Allows a user to remove their like from a specific post by providing the user ID and post ID in the request body.
+      tags:
+        - SocialNetwork
+      operationId: removeLike
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkUnlikePostRequest'
+      responses:
+        '200':
+          description: Like removed successfully.
+  /social-network/posts/{postId}/comment:
+    post:
+      summary: Create a new comment on a post
+      description: Allows a user to add a comment to an existing post.
+      tags:
+        - SocialNetwork
+      operationId: commentOnPost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: ID of the post to comment on
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkComment'
+            example:
+              userId: 42
+              content: "This is my comment"
+      responses:
+        '201':
+          description: Comment created successfully
+  /social-network/posts/removeComment:
+    post:
+      summary: Removes a comment from a post.
+      description: Allows a user to remove their own comment from a specific post by providing the post ID, comment ID, and user ID.
+      tags:
+        - SocialNetwork
+      operationId: removeComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocialNetworkRemoveCommentEvent'
+      responses:
+        '200':
+          description: Comment removed successfully.
+components:
+  schemas:
+    SocialNetworkPost:
+      type: object
+      properties:
+        id:
+          type: integer
+        body:
+          type: string
+        ownerId:
+          type: integer
+        ownerEmail:
+          type: string
+        tags:
+          type: array
+          items:
+            type: integer
+        likeCount:
+          type: integer
+        likesInUserIds:
+          type: array
+          items:
+            type: integer
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialNetworkComment'
+    SocialNetworkComment:
+      type: object
+      properties:
+        commentId:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+    SocialNetworkUsers:
+      type: array
+      items:
+        $ref: '#/components/schemas/SocialNetworkUser'
+    SocialNetworkUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john.doe@example.com"
+        friends:
+          type: array
+          description: A list of the user's friends.
+          items:
+            type: integer
+    SocialNetworkFriendRequest:
+      type: object
+      properties:
+        userId:
+          type: integer
+        friendId:
+          type: integer
+    SocialNetworkLikePostRequest:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+    SocialNetworkUnlikePostRequest:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+    SocialNetworkRemoveCommentEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+        commentId:
+          type: integer
+        userId:
+          type: integer
+
+
+

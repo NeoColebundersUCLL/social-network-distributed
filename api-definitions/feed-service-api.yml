@@ -1,0 +1,110 @@
+openapi: 3.0.1
+info:
+  title: Feed Service API
+  description: API for managing user feeds and retrieving posts for the user.
+  version: 1.0.0
+paths:
+  /feed/{userId}:
+    get:
+      summary: Get user feed
+      description: Retrieves a list of posts for a specific user.
+      tags:
+        - Feed
+      operationId: getUserFeed
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the user whose feed is being retrieved.
+      responses:
+        '200':
+          description: List of posts for the user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeedPost'
+        '404':
+          description: User not found or no posts for the user
+        '500':
+          description: Internal Server Error
+  /feed/{userId}/search:
+    get:
+      summary: Search user feed
+      description: Retrieves a list of posts for the given user that match the search query.
+      tags:
+        - Feed
+      operationId: searchUserFeed
+      parameters:
+        - name: userId
+          in: path
+          description: The ID of the user whose feed is being searched.
+          required: true
+          schema:
+            type: integer
+        - name: query
+          in: query
+          description: The search query string to filter posts.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of posts matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FeedPost'
+components:
+  schemas:
+    FeedPosts:
+      type: array
+      items:
+        $ref: '#/components/schemas/FeedPost'
+    FeedPost:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        ownerId:
+          type: integer
+          example: 1
+        ownerEmail:
+          type: string
+          example: "owner@example.com"
+        body:
+          type: string
+          example: "This is a sample post body."
+        tags:
+          type: array
+          items:
+            type: integer
+            example: 42
+        likeCount:
+          type: integer
+          example: 145
+        likesInUserIds:
+          type: array
+          items:
+            type: integer
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedComment'
+
+    FeedComment:
+      type: object
+      properties:
+        commentId:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+

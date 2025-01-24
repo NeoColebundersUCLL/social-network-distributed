@@ -1,0 +1,163 @@
+openapi: 3.0.1
+info:
+  title: Post Service API
+  description: Post Service API for managing posts
+  version: 1.0.0
+paths:
+  /posts:
+    get:
+      summary: Get all posts
+      tags:
+        - Post
+      operationId: getAllPosts
+      responses:
+        '200':
+          description: List of all posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiPost'
+  /posts/{userId}:
+    post:
+      summary: Create a post
+      tags:
+        - Post
+      operationId: createPost
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiPost'
+      responses:
+        '204':
+          description: Post created successfully
+  /posts/user/{userId}:
+    get:
+      summary: Get posts by user ID
+      tags:
+        - Post
+      operationId: getPostsByUserId
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of posts for the specified user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiPost'
+  /posts/tag/{postId}:
+    post:
+      summary: Tag users to a post
+      description: Tags a list of users to an existing post by their IDs.
+      tags:
+        - Post
+      operationId: tagUsers
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the post to which users will be tagged
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+                example: 1
+            example:
+              - 1
+              - 2
+              - 3
+      responses:
+        '204':
+          description: Users tagged successfully
+        '400':
+          description: Bad Request (e.g., post not found or invalid user IDs)
+        '500':
+          description: Internal Server Error
+  /posts/remove/{postId}/user/{userId}:
+    delete:
+      summary: deletes a post of a user.
+      description: remove
+      tags:
+        - Post
+      operationId: removePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: Id of post.
+          schema:
+            type: integer
+            format: int32
+        - name: userId
+          in: path
+          required: true
+          description: Id of user.
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: post deleted succesful.
+        '404':
+          description: user not found.
+        '400':
+          description: error.
+components:
+  schemas:
+    ApiPosts:
+      type: array
+      items:
+        $ref: '#/components/schemas/ApiPost'
+    ApiPost:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        userId:
+          type: integer
+          example: 1
+        body:
+          type: string
+          example: "This is a post body"
+        tags:
+          type: array
+          items:
+            type: integer
+            example: 42
+    SendEmailEvent:
+      type: object
+      properties:
+        recipient:
+          type: string
+          description: The email address of the recipient.
+          example: "john.doe@example.com"
+        message:
+          type: string
+          description: The email content or notification message.
+          example: "You are tagged in a post."
+
+
+

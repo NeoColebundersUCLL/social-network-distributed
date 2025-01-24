@@ -1,0 +1,14 @@
+request:
+  method: POST
+  url: /posts/saga
+  headers:
+    Content-Type: application/json
+  body:
+    ownerId: 1
+    body: "This is a sample post"
+    tags:
+      - 1
+      - 2
+      - 3
+response:
+  status: 200

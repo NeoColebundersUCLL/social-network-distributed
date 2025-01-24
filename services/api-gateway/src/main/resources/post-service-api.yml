@@ -1,0 +1,344 @@
+openapi: 3.0.1
+info:
+  title: Post Service API
+  description: Post Service API for managing posts
+  version: 1.0.0
+paths:
+  /posts:
+    get:
+      summary: Get all posts
+      tags:
+        - Post
+      operationId: getAllPosts
+      responses:
+        '200':
+          description: List of all posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiPost'
+  /posts/user/{userId}:
+    get:
+      summary: Get posts by user ID
+      tags:
+        - Post
+      operationId: getPostsByUserId
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of posts for the specified user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiPost'
+
+  /posts/saga:
+    post:
+      summary: Create a new post with tags using saga
+      description: Creates a new post, tags users, and validates both the owner and tagged users using the Saga pattern.
+      tags:
+        - Post
+      operationId: createPostWithTagsSaga
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiPost'
+            example:
+              ownerId: 1
+              body: "This is a new post"
+              tags:
+                - 1
+                - 2
+                - 3
+      responses:
+        '204':
+          description: Post created and users tagged successfully
+        '400':
+          description: Bad Request (e.g., invalid data)
+        '500':
+          description: Internal Server Error
+
+  /posts/remove/{postId}/user/{userId}:
+    delete:
+      summary: deletes a post of a user.
+      description: remove
+      tags:
+        - Post
+      operationId: removePost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: Id of post.
+          schema:
+            type: integer
+            format: int32
+        - name: userId
+          in: path
+          required: true
+          description: Id of user.
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: post deleted succesful.
+        '404':
+          description: user not found.
+        '400':
+          description: error.
+  /posts/like:
+    post:
+      summary: Likes a post for a user.
+      description: Allows a user to like a specific post by providing the user ID and post ID in the request body.
+      tags:
+        - Post
+      operationId: likePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: ID of the user liking the post.
+                  example: 123
+                postId:
+                  type: integer
+                  description: ID of the post to like.
+                  example: 456
+              required:
+                - userId
+                - postId
+      responses:
+        '200':
+          description: Post liked successfully.
+  /posts/comment/{postId}:
+    post:
+      summary: Create a new comment on a post
+      description: Allows a user to add a comment to an existing post.
+      tags:
+        - Post
+      operationId: commentOnPost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          description: ID of the post to comment on
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiComment'
+            example:
+              userId: 42
+              content: "This is my comment"
+      responses:
+        '201':
+          description: Comment created successfully
+
+  /posts/unlike:
+    post:
+      summary: Removes a like from a post for a user.
+      description: Allows a user to remove their like from a specific post by providing the user ID and post ID in the request body.
+      tags:
+        - Post
+      operationId: removeLike
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                  description: ID of the user removing the like.
+                  example: 123
+                postId:
+                  type: integer
+                  description: ID of the post to unlike.
+                  example: 456
+              required:
+                - userId
+                - postId
+      responses:
+        '200':
+          description: Like removed successfully.
+  /posts/removeComment:
+    post:
+      summary: Removes a comment from a post.
+      description: Allows a user to remove their own comment from a specific post by providing the post ID, comment ID, and user ID.
+      tags:
+        - Post
+      operationId: removeComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                postId:
+                  type: integer
+                  description: ID of the post containing the comment.
+                  example: 123
+                commentId:
+                  type: integer
+                  description: ID of the comment to remove.
+                  example: 456
+                userId:
+                  type: integer
+                  description: ID of the user attempting to remove the comment.
+                  example: 789
+              required:
+                - postId
+                - commentId
+                - userId
+      responses:
+        '200':
+          description: Comment removed successfully.
+components:
+  schemas:
+    ApiPosts:
+      type: array
+      items:
+        $ref: '#/components/schemas/ApiPost'
+    ApiPost:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        ownerId:
+          type: integer
+          example: 1
+        isValidOwnerId:
+          type: boolean
+        ownerEmail:
+          type: string
+        body:
+          type: string
+          example: "This is a post body"
+        tags:
+          type: array
+          items:
+            type: integer
+            example: 42
+        status:
+          type: string
+          example: REGISTERED
+        likeCount:
+          type: integer
+          example: 3
+        likesInUserIds:
+          type: array
+          items:
+            type: integer
+            example: 2
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiComment'
+
+    SendEmailEvent:
+      type: object
+      properties:
+        recipient:
+          type: string
+          description: The email address of the recipient.
+          example: "john.doe@example.com"
+        message:
+          type: string
+          description: The email content or notification message.
+          example: "You are tagged in a post."
+    ApiPostForEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        ownerId:
+          type: integer
+          example: 1
+        ownerEmail:
+          type: string
+        body:
+          type: string
+          example: "This is a post body"
+        tags:
+          type: array
+          items:
+            type: integer
+            example: 42
+        likeCount:
+          type: integer
+          example: 3
+    PostCreatedEvent:
+      type : object
+      properties:
+        post:
+          $ref: '#/components/schemas/ApiPostForEvent'
+    PostUpdatedEvent:
+      type: object
+      properties:
+        post:
+          $ref: '#/components/schemas/ApiPost'
+    RemovePostEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+    RemoveLikeEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+        userId:
+          type: integer
+    RemoveCommentEvent:
+      type: object
+      properties:
+        postId:
+          type: integer
+        commentId:
+          type: integer
+        userId:
+          type: integer
+    ApiComment:
+      type: object
+      properties:
+        commentId:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+
+
+
+
+
+
+
+
+
